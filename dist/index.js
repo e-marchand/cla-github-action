@@ -879,8 +879,8 @@ function signatureWithPRComment(committerMap, committers) {
             core.debug(`comment ${i} ${filteredListOfPRComments[i].body}`);
             delete filteredListOfPRComments[i].body;
         }
-        core.debug(`committerMap ${committerMap}`);
-        core.debug(`committerMap.notSigned ${committerMap.notSigned}`);
+        core.debug(`committerMap ${JSON.stringify(committerMap)}`);
+        core.debug(`committerMap.notSigned ${JSON.stringify(committerMap.notSigned)}`);
         /*
         *checking if the reacted committers are not the signed committers(not in the storage file) and filtering only the unsigned committers
         */
