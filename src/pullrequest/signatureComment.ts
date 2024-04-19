@@ -27,11 +27,13 @@ export default async function signatureWithPRComment(committerMap: CommitterMap,
             pullRequestNo: context.issue.number
         })
     })
+    core.debug(`Number of pr comments ${ listOfPRComments.length }`)
     listOfPRComments.map(comment => {
         if (isCommentSignedByUser(comment.body || "", comment.name)) {
             filteredListOfPRComments.push(comment)
         }
     })
+    core.debug(`Number of signed pr comments ${ filteredListOfPRComments.length }`)
     for (var i = 0; i < filteredListOfPRComments.length; i++) {
         delete filteredListOfPRComments[i].body
     }
@@ -40,10 +42,12 @@ export default async function signatureWithPRComment(committerMap: CommitterMap,
     */
     const newSigned = filteredListOfPRComments.filter(commentedCommitter => committerMap.notSigned!.some(notSignedCommitter => commentedCommitter.id === notSignedCommitter.id))
 
+    core.debug(`Number of new signed pr comments ${ newSigned.length }`)
     /*
     * checking if the commented users are only the contributors who has committed in the same PR (This is needed for the PR Comment and changing the status to success when all the contributors has reacted to the PR)
     */
     const onlyCommitters = committers.filter(committer => filteredListOfPRComments.some(commentedCommitter => committer.id == commentedCommitter.id))
+    core.debug(`Number of commiters only pr comments ${ onlyCommitters.length }`)
     const commentedCommitterMap: ReactedCommitterMap = {
         newSigned,
         onlyCommitters,

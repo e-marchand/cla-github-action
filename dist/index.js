@@ -657,6 +657,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commentContent = void 0;
 const input = __importStar(__nccwpck_require__(3611));
+const pr_sign_comment_1 = __nccwpck_require__(6718);
 function commentContent(signed, committerMap) {
     // using a `string` true or false purposely as github action input cannot have a boolean value
     if (input.getUseDcoFlag() == 'true') {
@@ -715,7 +716,7 @@ function cla(signed, committerMap) {
     let lineOne = (input.getCustomNotSignedPrComment() || `<br/>Thank you for your submission, we really appreciate it. Like many open-source projects, we ask that $you sign our [Contributor License Agreement](${input.getPathToDocument()}) before we can accept your contribution. You can sign the CLA by just posting a Pull Request Comment same as the below format.<br/>`).replace('$you', you);
     let text = `**CLA Assistant Lite bot:** ${lineOne}
    - - -
-   ${input.getCustomPrSignComment() || "I have read the CLA Document and I hereby sign the CLA"}
+   ${(0, pr_sign_comment_1.getPrSignComment)()}
    - - -
    `;
     if (committersCount > 1 && committerMap && committerMap.signed && committerMap.notSigned) {
@@ -808,6 +809,29 @@ exports.lockPullRequest = lockPullRequest;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -821,6 +845,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const octokit_1 = __nccwpck_require__(3258);
 const github_1 = __nccwpck_require__(5438);
 const getInputs_1 = __nccwpck_require__(3611);
+const core = __importStar(__nccwpck_require__(2186));
 function signatureWithPRComment(committerMap, committers) {
     return __awaiter(this, void 0, void 0, function* () {
         let repoId = github_1.context.payload.repository.id;
@@ -842,11 +867,13 @@ function signatureWithPRComment(committerMap, committers) {
                 pullRequestNo: github_1.context.issue.number
             });
         });
+        core.debug(`Number of pr comments ${listOfPRComments.length}`);
         listOfPRComments.map(comment => {
             if (isCommentSignedByUser(comment.body || "", comment.name)) {
                 filteredListOfPRComments.push(comment);
             }
         });
+        core.debug(`Number of signed pr comments ${filteredListOfPRComments.length}`);
         for (var i = 0; i < filteredListOfPRComments.length; i++) {
             delete filteredListOfPRComments[i].body;
         }
@@ -854,10 +881,12 @@ function signatureWithPRComment(committerMap, committers) {
         *checking if the reacted committers are not the signed committers(not in the storage file) and filtering only the unsigned committers
         */
         const newSigned = filteredListOfPRComments.filter(commentedCommitter => committerMap.notSigned.some(notSignedCommitter => commentedCommitter.id === notSignedCommitter.id));
+        core.debug(`Number of new signed pr comments ${newSigned.length}`);
         /*
         * checking if the commented users are only the contributors who has committed in the same PR (This is needed for the PR Comment and changing the status to success when all the contributors has reacted to the PR)
         */
         const onlyCommitters = committers.filter(committer => filteredListOfPRComments.some(commentedCommitter => committer.id == commentedCommitter.id));
+        core.debug(`Number of commiters only pr comments ${onlyCommitters.length}`);
         const commentedCommitterMap = {
             newSigned,
             onlyCommitters,
@@ -947,8 +976,11 @@ function setupClaCheck() {
         try {
             const reactedCommitters = (yield (0, pullRequestComment_1.default)(committerMap, committers));
             if (reactedCommitters === null || reactedCommitters === void 0 ? void 0 : reactedCommitters.newSigned.length) {
-                /* pushing the recently signed  contributors to the CLA Json File */
+                core.info(`Pushing the recently signed contributors to the CLA Json File`);
                 yield (0, persistence_1.updateFile)(sha, claFileContent, reactedCommitters);
+            }
+            else {
+                core.debug(`No new signed contributors`);
             }
             if ((reactedCommitters === null || reactedCommitters === void 0 ? void 0 : reactedCommitters.allSignedFlag) ||
                 (committerMap === null || committerMap === void 0 ? void 0 : committerMap.notSigned) === undefined ||
@@ -1087,6 +1119,45 @@ const getCustomPrSignComment = () => core.getInput('custom-pr-sign-comment', { r
 exports.getCustomPrSignComment = getCustomPrSignComment;
 const lockPullRequestAfterMerge = () => core.getInput('lock-pullrequest-aftermerge', { required: false });
 exports.lockPullRequestAfterMerge = lockPullRequestAfterMerge;
+
+
+/***/ }),
+
+/***/ 6718:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getPrSignComment = void 0;
+const input = __importStar(__nccwpck_require__(3611));
+function getPrSignComment() {
+    return input.getCustomPrSignComment() || "I have read the CLA Document and I hereby sign the CLA";
+}
+exports.getPrSignComment = getPrSignComment;
 
 
 /***/ }),

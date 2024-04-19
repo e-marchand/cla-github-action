@@ -36,8 +36,11 @@ export async function setupClaCheck() {
     )) as ReactedCommitterMap
 
     if (reactedCommitters?.newSigned.length) {
-      /* pushing the recently signed  contributors to the CLA Json File */
+      core.info(`Pushing the recently signed contributors to the CLA Json File`)
       await updateFile(sha, claFileContent, reactedCommitters)
+    }
+    else {
+      core.debug(`No new signed contributors`)
     }
     if (
       reactedCommitters?.allSignedFlag ||
