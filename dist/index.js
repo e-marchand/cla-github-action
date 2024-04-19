@@ -875,8 +875,12 @@ function signatureWithPRComment(committerMap, committers) {
         });
         core.debug(`Number of signed pr comments ${filteredListOfPRComments.length}`);
         for (var i = 0; i < filteredListOfPRComments.length; i++) {
+            core.debug(`comment ${i} ${filteredListOfPRComments[i].id}`);
+            core.debug(`comment ${i} ${filteredListOfPRComments[i].body}`);
             delete filteredListOfPRComments[i].body;
         }
+        core.debug(`committerMap ${committerMap}`);
+        core.debug(`committerMap.notSigned ${committerMap.notSigned}`);
         /*
         *checking if the reacted committers are not the signed committers(not in the storage file) and filtering only the unsigned committers
         */
